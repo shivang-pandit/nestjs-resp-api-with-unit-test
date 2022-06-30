@@ -1,0 +1,38 @@
+services:
+  app:
+    build: . # Dockerfile location
+    restart: unless-stopped
+    env_file: ./.env # available inside container not in compose file
+    ports:
+      - 3000:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./:/home/app
+      - /home/app/node_modules
+      - /home/app/dist
+    healthcheck:
+      test: [ 'CMD', 'curl', '--fail', 'http://localhost:3000/api' ]
+      interval: 5s
+      retries: 3
+      timeout: 3s
+
+  db:
+    image: mongo:5.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'admin'
+      MONGO_INITDB_ROOT_PASSWORD: 'test123'
+    ports:
+      - 27018:27017
+    volumes:
+      - mongodb:/data/db
+    healthcheck:
+      test: [ 'CMD', 'mongo', '--eval', "db.adminCommand('ping')" ]
+      interval: 5s
+      retries: 3
+      timeout: 3s
+
+volumes:
+  mongodb:
